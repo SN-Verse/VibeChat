@@ -258,7 +258,7 @@ This project is licensed under the MIT License.
 
 ## 👥 Authors
 
-- **Your Name** - [GitHub](https://github.com/yourusername)
+- **SN** - [GitHub](https://github.com/soumyajitnandi0)
 
 ---
 
