@@ -53,6 +53,10 @@ socketServer.on("connection",(socket)=>{
     })
 })
 
+// Store socketServer and userSocketMap in app.locals for access in controllers
+app.locals.socketServer = socketServer;
+app.locals.userSocketMap = userSocketMap;
+
 // Middleweare Setup
 app.use(express.json({limit:"4mb"}))
 app.use(cors({

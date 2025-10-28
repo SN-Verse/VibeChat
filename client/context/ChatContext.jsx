@@ -59,14 +59,20 @@ export const ChatProvider = ({ children }) => {
         });
 
         socket.on("messageDeleted", ({ messageId, deleteFor }) => {
-            if (deleteFor === 'everyone') {
-                setMessages(prev => prev.filter(msg => msg._id !== messageId));
-            }
+            setMessages(prev => {
+                if (deleteFor === 'everyone') {
+                    return prev.filter(msg => msg._id !== messageId);
+                }
+                return prev;
+            });
         });
     };
 
     const unsubscribeFromMessage = () => {
-        if (socket) socket.off("newMessage");
+        if (socket) {
+            socket.off("newMessage");
+            socket.off("messageDeleted");
+        }
     };
 
     useEffect(() => {
