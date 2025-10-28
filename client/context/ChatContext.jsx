@@ -43,9 +43,12 @@ export const ChatProvider = ({ children }) => {
 
     // Subscribe to new messages
     const subscribeToMessages = () => {
-        if (!socket) return;
+        if (!socket) {
+            console.warn("Socket not available");
+            return;
+        }
 
-        socket.on("newMessage", (newMessage) => {
+        const handleNewMessage = (newMessage) => {
             if (selectedUser && newMessage.senderId === selectedUser._id) {
                 newMessage.seen = true;
                 setMessages(prev => [...prev, newMessage]);
@@ -56,23 +59,36 @@ export const ChatProvider = ({ children }) => {
                     [newMessage.senderId]: (prev[newMessage.senderId] || 0) + 1
                 }));
             }
-        });
+        };
 
-        socket.on("messageDeleted", ({ messageId, deleteFor }) => {
-            if (deleteFor === 'everyone') {
-                setMessages(prev => prev.filter(msg => msg._id !== messageId));
-            }
-        });
-    };
+        const handleMessageDeleted = ({ messageId, deleteFor }) => {
+            setMessages(prev => {
+                if (deleteFor === 'everyone') {
+                    return prev.filter(msg => msg._id !== messageId);
+                }
+                return prev;
+            });
+        };
 
-    const unsubscribeFromMessage = () => {
-        if (socket) socket.off("newMessage");
+        socket.on("newMessage", handleNewMessage);
+        socket.on("messageDeleted", handleMessageDeleted);
+
+        // Return cleanup function
+        return () => {
+            socket.off("newMessage", handleNewMessage);
+            socket.off("messageDeleted", handleMessageDeleted);
+        };
     };
 
     useEffect(() => {
-        subscribeToMessages();
-        return () => unsubscribeFromMessage();
-    }, [socket, selectedUser]);
+        if (!socket) return;
+        
+        const cleanup = subscribeToMessages();
+        
+        return () => {
+            if (cleanup) cleanup();
+        };
+    }, [socket, selectedUser, axios]);
 
     // Delete message
     const deleteMessage = async (messageId, deleteFor) => {

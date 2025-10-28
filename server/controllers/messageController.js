@@ -109,8 +109,6 @@ export const deleteMessage = async (req, res) => {
         const { deleteFor } = req.body;
         const userId = req.user._id;
 
-        console.log('Delete params:', { messageId, deleteFor, userId }); // Debug log
-
         const message = await Message.findById(messageId);
         
         if (!message) {
@@ -121,8 +119,28 @@ export const deleteMessage = async (req, res) => {
             if (message.senderId.toString() !== userId.toString()) {
                 return res.status(403).json({ success: false, message: "Unauthorized" });
             }
+            
+            // Delete the message
             await Message.findByIdAndDelete(messageId);
+            
+            // Emit socket event to notify other users
+            // Import at the top of file to avoid circular dependency
+            const { socketServer, userSocketMap } = req.app.locals;
+            const receiverSocketId = userSocketMap[message.receiverId.toString()];
+            const senderSocketId = userSocketMap[message.senderId.toString()];
+            
+            // Notify receiver if online
+            if (receiverSocketId) {
+                socketServer.to(receiverSocketId).emit("messageDeleted", { messageId, deleteFor: 'everyone' });
+            }
+            
+            // Notify sender if online
+            if (senderSocketId) {
+                socketServer.to(senderSocketId).emit("messageDeleted", { messageId, deleteFor: 'everyone' });
+            }
+            
         } else {
+            // Delete for me only - update the deletedFor array
             await Message.findByIdAndUpdate(messageId, {
                 $addToSet: { deletedFor: userId }
             });

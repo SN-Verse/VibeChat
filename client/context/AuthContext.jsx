@@ -65,10 +65,11 @@ export const AuthProvider = ({children})=>{
         axios.defaults.headers.common["token"]=null;
         toast.success("Logged out successfully")
         if (socket) {
-          socket.disconnect();
-     setSocket(null);
+            socket.removeAllListeners();
+            socket.disconnect();
+            setSocket(null);
+        }
     }
-}
 
     // update profile function to handle user profile updates
 
@@ -93,20 +94,41 @@ export const AuthProvider = ({children})=>{
         // Disconnect existing socket if any
         if(socket?.connected) {
             socket.disconnect();
+            socket.removeAllListeners();
         }
 
         const newSocket = io(backendUrl, {
             query: {
                 userId: userData._id,
-            }
+            },
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            reconnectionDelay: 1000,
         });
 
-        newSocket.connect();
-        setSocket(newSocket);
+        // Handle successful connection
+        newSocket.on("connect", () => {
+            console.log("Socket connected successfully");
+        });
 
+        // Handle connection errors
+        newSocket.on("connect_error", (error) => {
+            console.error("Socket connection error:", error);
+            toast.error("Connection error. Please check your internet.");
+        });
+
+        // Handle disconnection
+        newSocket.on("disconnect", (reason) => {
+            console.log("Socket disconnected:", reason);
+        });
+
+        // Listen for online users
         newSocket.on("getOnlineUsers", (userIds)=>{
             setOnlineUsers(userIds);
         });
+
+        setSocket(newSocket);
     }
 
     useEffect(()=>{
