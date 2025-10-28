@@ -176,6 +176,14 @@ const ChatContainer = () => {
                         className="hidden group-hover:block absolute top-0 right-0 w-4 h-4 cursor-pointer text-red-500 hover:text-red-600"
                         onClick={() => setShowDeleteOptions(msg._id)}
                       />
+                      {/* Message delivery status indicator */}
+                      {msg.senderId === authUser._id && (
+                        <div className="absolute -right-10 bottom-1 flex items-center gap-0.5 text-[10px] text-gray-400 animate-fade-in">
+                          <span className={msg.seen ? 'text-blue-400' : 'text-gray-500'}>
+                            {msg.seen ? '✓✓' : '✓'}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   )}
 
