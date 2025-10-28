@@ -6,7 +6,7 @@ import { connectDB } from "./lib/db.js";
 import userRouter from "./routes/userRoutes.js";
 import messageRouter from "./routes/messageRoutes.js";
 import { Server } from "socket.io";
-import { io } from "socket.io-client";
+
 
 // create Express app and HTTP server
 
@@ -67,5 +67,5 @@ app.use("/api/messages",messageRouter)
 // Connecct to MongoDB
 await connectDB();
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 5001;
 server.listen(PORT, ()=> console.log("Server is running on :"+ PORT));

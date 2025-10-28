@@ -9,6 +9,8 @@ const ProfilePage = () => {
   const [selectedImg, setSelectedImg] = useState(null);
   const [name, setName] = useState(authUser.fullName);
   const [bio, setBio] = useState(authUser.bio);
+  const [contact, setContact] = useState(authUser.contact || "");
+  const [additionalDetails, setAdditionalDetails] = useState(authUser.additionalDetails || "");
   const navigate = useNavigate();
 
   const handleImgChange = (e) => {
@@ -33,13 +35,13 @@ const ProfilePage = () => {
       const reader = new FileReader();
       reader.onloadend = async () => {
         profilePic = reader.result;
-        await updateProfile({ fullName: name, bio, profilePic });
+        await updateProfile({ fullName: name, bio, contact, additionalDetails, profilePic });
         setSelectedImg(null);
         navigate('/');
       };
       reader.readAsDataURL(selectedImg);
     } else {
-      await updateProfile({ fullName: name, bio, profilePic });
+      await updateProfile({ fullName: name, bio, contact, additionalDetails, profilePic });
       navigate('/');
     }
   };
@@ -84,6 +86,26 @@ const ProfilePage = () => {
               onChange={e => setBio(e.target.value)}
               className="w-full px-4 py-2 rounded bg-[#1a1536] text-white border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
               placeholder="Tell us about yourself"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label className="block text-gray-200 mb-1">Contact</label>
+            <input
+              type="text"
+              value={contact}
+              onChange={e => setContact(e.target.value)}
+              className="w-full px-4 py-2 rounded bg-[#1a1536] text-white border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Phone, email, or handle"
+            />
+          </div>
+          <div>
+            <label className="block text-gray-200 mb-1">Additional Details</label>
+            <textarea
+              value={additionalDetails}
+              onChange={e => setAdditionalDetails(e.target.value)}
+              className="w-full px-4 py-2 rounded bg-[#1a1536] text-white border border-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+              placeholder="Any extra info you'd like to share"
               rows={3}
             />
           </div>

@@ -6,6 +6,8 @@ const userSchema = new mongoose.Schema({
     password:{type:String,required:true,minlength:6},
     profilePic:{type:String,default:""},
     bio:{type:String},
+    contact:{type:String, default:""}, // e.g., phone or alternate contact
+    additionalDetails:{type:String, default:""}, // free-form details
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     sentRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     receivedRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }]

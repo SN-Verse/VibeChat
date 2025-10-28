@@ -47,10 +47,11 @@ export const AuthProvider = ({children})=>{
                 localStorage.setItem("token",data.token)
                 toast.success(data.message)
             }else{
-                toast.error(error.message)
+                toast.error(data.message || "Authentication failed")
             }
         } catch (error) {
-            toast.error(error.message)
+            const message = error?.response?.data?.message || error.message || "Request failed";
+            toast.error(message)
         }
     }
 
