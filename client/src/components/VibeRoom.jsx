@@ -1,5 +1,4 @@
 import { useState, useContext, useRef, useEffect } from "react";
-import { io } from "socket.io-client";
 import { AuthContext } from "../../context/AuthContext";
 import { ChatContext } from "../../context/ChatContext";
 import { assets } from "../assets/assets";
@@ -7,8 +6,6 @@ import toast from "react-hot-toast";
 import { v4 as uuidv4 } from "uuid";
 import { useLocation, useNavigate, useParams } from "react-router-dom";
 import YouTube from "react-youtube";
-
-const socket = io(import.meta.env.VITE_BACKEND_URL);
 
 function getYouTubeEmbedUrl(url) {
   const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
@@ -19,7 +16,7 @@ function getYouTubeEmbedUrl(url) {
 }
 
 const VibeRoom = () => {
-  const { authUser } = useContext(AuthContext);
+  const { authUser, socket } = useContext(AuthContext);
   const { friends, sendMessage: contextSendMessage } = useContext(ChatContext);
   const [videoUrl, setVideoUrl] = useState("");
   const [embedUrl, setEmbedUrl] = useState("");
@@ -41,21 +38,27 @@ const VibeRoom = () => {
   }, [videoParam]);
 
   useEffect(() => {
+    if (!socket) return;
+    
     if (roomId) {
       socket.emit("join-viberoom", roomId);
     }
+    
     // Listen for video actions
-    socket.on("video-action", ({ action, time }) => {
+    const handleVideoAction = ({ action, time }) => {
       if (!playerRef.current) return;
       const ytPlayer = playerRef.current.internalPlayer;
       if (action === "play") ytPlayer.playVideo();
       if (action === "pause") ytPlayer.pauseVideo();
       if (action === "seek") ytPlayer.seekTo(time, true);
-    });
-    return () => {
-      socket.off("video-action");
     };
-  }, [roomId]);
+    
+    socket.on("video-action", handleVideoAction);
+    
+    return () => {
+      socket.off("video-action", handleVideoAction);
+    };
+  }, [roomId, socket]);
 
   const handleInviteUser = (user) => {
     if (invitedUsers.includes(user._id)) return;
@@ -117,7 +120,7 @@ const VibeRoom = () => {
 
   // Emit video actions
   const handlePlayerStateChange = (event) => {
-    if (!roomId) return;
+    if (!roomId || !socket) return;
     const ytPlayer = event.target;
     const state = ytPlayer.getPlayerState();
     const time = ytPlayer.getCurrentTime();
@@ -126,7 +129,7 @@ const VibeRoom = () => {
   };
 
   const handlePlayerSeek = (event) => {
-    if (!roomId) return;
+    if (!roomId || !socket) return;
     const ytPlayer = event.target;
     const time = ytPlayer.getCurrentTime();
     socket.emit("video-action", { roomId, action: "seek", time });
