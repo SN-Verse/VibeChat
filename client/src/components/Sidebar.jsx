@@ -12,13 +12,14 @@ const Sidebar = () => {
     const {getSocialData, friends, selectedUser, setSelectedUser, unseenMessages, setUnseenMessages, receivedRequests } = useContext(ChatContext)
     const {logout, onlineUsers} = useContext(AuthContext)
     const [input, setInput] = useState('')
+    const [onlineOnly, setOnlineOnly] = useState(false);
     const [showSocial, setShowSocial] = useState(false);
     const navigate = useNavigate();
 
     // Filter friends by search input
-    const filteredFriends = input
-        ? friends.filter((user) => user.fullName.toLowerCase().includes(input.toLowerCase()))
-        : friends;
+    const filteredFriends = (friends || [])
+        .filter((user) => !input || user.fullName.toLowerCase().includes(input.toLowerCase()))
+        .filter((user) => !onlineOnly || onlineUsers.includes(user._id));
 
     useEffect(() => {
         getSocialData()
@@ -58,9 +59,25 @@ const Sidebar = () => {
                         </div>
                     </div>
                 </div>
-                <div className='bg-[#282142] rounded-full flex items-center gap-2 py-3 px-4 mt-5' >
+                <div className='bg-[#282142] rounded-full flex items-center gap-2 py-3 px-4 mt-5'>
                     <img src={assets.search_icon} alt="Search" className='w-3' />
-                    <input onChange={(e)=>setInput(e.target.value)} type="text" className='bg-transparent border-none outline-none text-white text-xs placeholder:[#c8c8c8] flex-1 'placeholder='Search User...'  />
+                    <input
+                        onChange={(e)=>setInput(e.target.value)}
+                        type="text"
+                        className='bg-transparent border-none outline-none text-white text-xs placeholder:[#c8c8c8] flex-1'
+                        placeholder='Search User...'
+                    />
+                </div>
+                <div className='mt-3 flex items-center gap-2 text-xs text-gray-300'>
+                    <label className='flex items-center gap-2 cursor-pointer'>
+                        <input
+                            type='checkbox'
+                            checked={onlineOnly}
+                            onChange={(e)=>setOnlineOnly(e.target.checked)}
+                            className='accent-purple-500'
+                        />
+                        Show online only
+                    </label>
                 </div>
                 {/* <button
                     className="w-full bg-purple-600 text-white py-2 rounded-lg mt-4 hover:bg-purple-700 transition"
