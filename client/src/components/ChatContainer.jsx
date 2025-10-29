@@ -67,15 +67,35 @@ const ChatContainer = () => {
 
   // Send image
   const handleSendImage = async (e) => {
-    const file = e.target.files[0]
-    if (!file || !file.type.startsWith("image/")) {
-      toast.error("Select an image file")
+    const file = e.target.files && e.target.files[0]
+    const resetInput = () => { try { e.target.value = "" } catch(_){} }
+    if (!file) return
+
+    // Strict client-side validation (covers browsers that loosely honor accept="image/*")
+    const maxBytes = 5 * 1024 * 1024 // 5MB
+    const allowedExt = [".png", ".jpg", ".jpeg", ".gif", ".webp"]
+    const nameLower = (file.name || "").toLowerCase()
+    const hasAllowedExt = allowedExt.some(ext => nameLower.endsWith(ext))
+    const isImageMime = typeof file.type === 'string' && file.type.startsWith("image/")
+
+    if (!isImageMime || !hasAllowedExt) {
+      toast.error("Please select a valid image (png, jpg, jpeg, gif, webp)")
+      resetInput()
       return
     }
+    if (file.size > maxBytes) {
+      toast.error("Image too large. Max 5MB.")
+      resetInput()
+      return
+    }
+
     const reader = new FileReader()
     reader.onloadend = async () => {
-      await contextSendMessage({ image: reader.result }, selectedUser._id)
-      e.target.value = ""
+      try {
+        await contextSendMessage({ image: reader.result }, selectedUser._id)
+      } finally {
+        resetInput()
+      }
     }
     reader.readAsDataURL(file)
   }
