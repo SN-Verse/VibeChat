@@ -14,6 +14,7 @@ export const ChatProvider = ({ children }) => {
     const [receivedRequests, setReceivedRequests] = useState([]);
 
     const { socket, axios, authUser, onlineUsers } = useContext(AuthContext);
+    const [typingUsers, setTypingUsers] = useState({}); // { userId: boolean }
 
     // Get messages for selected user
     const getMessages = async (userId) => {
@@ -41,7 +42,7 @@ export const ChatProvider = ({ children }) => {
         }
     };
 
-    // Subscribe to new messages
+    // Subscribe to new messages and typing indicators
     const subscribeToMessages = () => {
         if (!socket) {
             console.warn("Socket not available");
@@ -70,13 +71,19 @@ export const ChatProvider = ({ children }) => {
             });
         };
 
+        const handleUserTyping = ({ from, isTyping }) => {
+            setTypingUsers(prev => ({ ...prev, [from]: !!isTyping }));
+        };
+
         socket.on("newMessage", handleNewMessage);
         socket.on("messageDeleted", handleMessageDeleted);
+        socket.on("userTyping", handleUserTyping);
 
         // Return cleanup function
         return () => {
             socket.off("newMessage", handleNewMessage);
             socket.off("messageDeleted", handleMessageDeleted);
+            socket.off("userTyping", handleUserTyping);
         };
     };
 
@@ -134,9 +141,15 @@ export const ChatProvider = ({ children }) => {
         getSocialData();
     }, [onlineUsers]);
 
+    const sendTypingStatus = (toUserId, isTyping) => {
+        if (!socket || !toUserId) return;
+        socket.emit('typing', { to: toUserId, isTyping: !!isTyping });
+    };
+
     const value = {
         messages, friends, allUsers, sentRequests, receivedRequests,
-        selectedUser, getSocialData, getMessages, sendMessage, setSelectedUser, unseenMessages, setUnseenMessages, deleteMessage
+        selectedUser, getSocialData, getMessages, sendMessage, setSelectedUser, unseenMessages, setUnseenMessages, deleteMessage,
+        typingUsers, sendTypingStatus
     };
 
     return (

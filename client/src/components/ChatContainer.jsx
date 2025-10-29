@@ -9,7 +9,7 @@ import { formatDateForGrouping } from "../utils/formatDate"
 
 
 const ChatContainer = () => {
-  const { messages, selectedUser, setSelectedUser, sendMessage: contextSendMessage, getMessages, deleteMessage } = useContext(ChatContext)
+  const { messages, selectedUser, setSelectedUser, sendMessage: contextSendMessage, getMessages, deleteMessage, typingUsers, sendTypingStatus } = useContext(ChatContext)
   const { authUser, onlineUsers } = useContext(AuthContext)
   const scrollEnd = useRef()
   const [input, setInput] = useState('')
@@ -18,6 +18,7 @@ const ChatContainer = () => {
   const [searchTerm, setSearchTerm] = useState('')
   const [searchResults, setSearchResults] = useState([])
   const [confirmDelete, setConfirmDelete] = useState({ show: false, messageId: null, deleteFor: null })
+  const typingTimeoutRef = useRef(null)
 
   useEffect(() => {
     if (selectedUser) getMessages(selectedUser._id)
@@ -60,6 +61,8 @@ const ChatContainer = () => {
     if (!input.trim()) return
     await contextSendMessage({ text: input.trim() }, selectedUser._id)
     setInput("")
+    // stop typing on send
+    sendTypingStatus(selectedUser._id, false)
   }
 
   // Send image
@@ -100,6 +103,9 @@ const ChatContainer = () => {
           {selectedUser.fullName}
           {onlineUsers.includes(selectedUser._id) && <span className='w-2 h-2 rounded-full bg-green-500'></span>}
         </p>
+        {typingUsers[selectedUser._id] && (
+          <span className='text-xs text-gray-400'>typing…</span>
+        )}
         <Search
           className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white"
           onClick={() => setShowSearch((prev) => !prev)}
@@ -267,7 +273,17 @@ const ChatContainer = () => {
           type="text"
           placeholder="Type a message..."
           value={input}
-          onChange={(e) => setInput(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value
+            setInput(val)
+            if (!selectedUser) return
+            // emit typing start and debounce stop
+            sendTypingStatus(selectedUser._id, true)
+            if (typingTimeoutRef.current) clearTimeout(typingTimeoutRef.current)
+            typingTimeoutRef.current = setTimeout(() => {
+              sendTypingStatus(selectedUser._id, false)
+            }, 900)
+          }}
           onKeyDown={(e) => {
             if (e.key === "Enter") {
               handleSendMessage(e);
