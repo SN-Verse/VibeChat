@@ -156,7 +156,7 @@ const ChatContainer = () => {
                         <b>{vibeInvite.fromName}</b> invited you to a VibeRoom!
                       </p>
                       <a
-                        href={`/viberoom/${vibeInvite.roomId}?video=${encodeURIComponent(vibeInvite.videoUrl)}`}
+                        href={`/viberoom/${vibeInvite.roomId}?v=${btoa(encodeURIComponent(vibeInvite.videoUrl))}`}
                         className="text-purple-400 underline"
                       >
                         Join & Watch Together
