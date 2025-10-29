@@ -44,6 +44,15 @@ socketServer.on("connection",(socket)=>{
         socket.to(roomId).emit("video-action", { action, time });
     });
 
+    // Typing indicator relay between users
+    socket.on("typing", ({ to, isTyping }) => {
+        if (!to || !userId) return;
+        const targetSocket = userSocketMap[to];
+        if (targetSocket) {
+            socketServer.to(targetSocket).emit("userTyping", { from: userId, isTyping: !!isTyping });
+        }
+    });
+
     // Emit online user to all connected clients
     socketServer.emit("getOnlineUsers",Object.keys(userSocketMap));
 
