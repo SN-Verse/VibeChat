@@ -134,7 +134,7 @@ const ChatContainer = () => {
     <div className='h-full overflow-y-scroll relative backdrop-blur-lg'>
       {/* Header */}
       <div className='flex items-center gap-3 py-3 mx-4 border-b border-stone-500'>
-        <img src={selectedUser.profilePic || assets.avatar_icon} alt="" className='w-8 rounded-full' />
+        <img src={selectedUser.profilePic || assets.avatar_icon} alt={`${selectedUser.fullName} avatar`} className='w-8 rounded-full' />
         <p className='flex-1 text-lg text-white flex items-center gap-2'>
           {selectedUser.fullName}
           {onlineUsers.includes(selectedUser._id) && <span className='w-2 h-2 rounded-full bg-green-500'></span>}
@@ -146,7 +146,7 @@ const ChatContainer = () => {
           className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white"
           onClick={() => setShowSearch((prev) => !prev)}
         />
-        <img onClick={() => setSelectedUser(null)} src={assets.arrow_icon} alt="" className='md:hidden max-w-7' />
+        <img onClick={() => setSelectedUser(null)} src={assets.arrow_icon} alt="Back" className='md:hidden max-w-7' />
       </div>
 
       {/* Search input */}
@@ -202,7 +202,7 @@ const ChatContainer = () => {
                     <div className="relative">
                       <img
                         src={msg.image}
-                        alt="Sent/Received"
+                        alt="Chat image"
                         className="w-40 h-40 object-cover rounded-lg cursor-pointer"
                         onLoad={() => { if (autoScroll) scrollToBottom() }}
                       />
@@ -299,7 +299,7 @@ const ChatContainer = () => {
                       src={msg.senderId === authUser._id
                         ? authUser?.profilePic || assets.avatar_icon
                         : selectedUser?.profilePic || assets.avatar_icon}
-                      alt=""
+                      alt={msg.senderId === authUser._id ? `${authUser.fullName} avatar` : `${selectedUser.fullName} avatar`}
                       className='w-7 rounded-full'
                     />
                     <p className='text-gray-500'>{formatMessageTime(msg.createdAt)}</p>
@@ -375,14 +375,14 @@ const ChatContainer = () => {
         <img
           onClick={handleSendMessage}
           src={assets.send_button}
-          alt=""
+          alt="Send"
           className="w-8 h-8 cursor-pointer"
         />
       </div>
     </div>
   ) : (
     <div className='flex flex-col items-center justify-center gap-2 text-gray-300'>
-      <img src={assets.logo_icon} alt="" className='max-w-16' />
+      <img src={assets.logo_icon} alt="VibeChat logo" className='max-w-16' />
       <p className='text-lg font-medium text-white'>🤘Where Vibes Connect, Conversations Begin.🤘</p>
     </div>
   )

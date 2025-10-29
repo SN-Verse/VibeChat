@@ -62,7 +62,7 @@ const SocialSection = () => {
         )}
         {notFriends.map(user => (
           <div key={user._id} className="flex items-center gap-2 bg-[#282142] rounded p-2">
-            <img src={user.profilePic || assets.avatar_icon} className="w-8 h-8 rounded-full" />
+            <img src={user.profilePic || assets.avatar_icon} alt={`${user.fullName} avatar`} className="w-8 h-8 rounded-full" />
             <span className="flex-1">{user.fullName}</span>
             <button
               disabled={loadingId === user._id}
@@ -82,7 +82,7 @@ const SocialSection = () => {
         )}
         {receivedRequests.map(user => (
           <div key={user._id} className="flex items-center gap-2 bg-[#282142] rounded p-2">
-            <img src={user.profilePic || assets.avatar_icon} className="w-8 h-8 rounded-full" />
+            <img src={user.profilePic || assets.avatar_icon} alt={`${user.fullName} avatar`} className="w-8 h-8 rounded-full" />
             <span className="flex-1">{user.fullName}</span>
             <button
               disabled={loadingId === user._id}
@@ -109,7 +109,7 @@ const SocialSection = () => {
         )}
         {sentRequests.map(user => (
           <div key={user._id} className="flex items-center gap-2 bg-[#282142] rounded p-2">
-            <img src={user.profilePic || assets.avatar_icon} className="w-8 h-8 rounded-full" />
+            <img src={user.profilePic || assets.avatar_icon} alt={`${user.fullName} avatar`} className="w-8 h-8 rounded-full" />
             <span className="flex-1">{user.fullName}</span>
             <span className="text-gray-400 text-xs">Pending</span>
           </div>
@@ -123,7 +123,7 @@ const SocialSection = () => {
         )}
         {friends.map(user => (
           <div key={user._id} className="flex items-center gap-2 bg-[#282142] rounded p-2">
-            <img src={user.profilePic || assets.avatar_icon} className="w-8 h-8 rounded-full" />
+            <img src={user.profilePic || assets.avatar_icon} alt={`${user.fullName} avatar`} className="w-8 h-8 rounded-full" />
             <span className="flex-1">{user.fullName}</span>
             <span className="text-green-400 text-xs">Friend</span>
           </div>

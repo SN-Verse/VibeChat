@@ -212,7 +212,7 @@ const VibeRoom = () => {
       <div className="flex items-center gap-3 py-3 px-4 border-b border-stone-500">
         <img
           src={authUser?.profilePic || assets.avatar_icon}
-          alt=""
+          alt={`${authUser?.fullName || 'User'} avatar`}
           className="w-8 h-8 rounded-full"
         />
         <p className="flex-1 text-lg font-semibold">
@@ -346,7 +346,7 @@ const VibeRoom = () => {
                 onClick={handleSendLiveChat}
                 className="p-2 rounded-full bg-violet-500 hover:bg-violet-600"
               >
-                <img src={assets.send_button} alt="" className="w-5 h-5" />
+                <img src={assets.send_button} alt="Send" className="w-5 h-5" />
               </button>
             </div>
           </div>

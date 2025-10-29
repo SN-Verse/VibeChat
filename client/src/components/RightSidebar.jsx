@@ -25,7 +25,7 @@ const RightSidebar = () => {
       <div className='pt-16 flex flex-col items-center gap-2 text-xs font-light mx-auto'>
   <img 
     src={selectedUser?.profilePic || assets.avatar_icon} 
-    alt="" 
+    alt={`${selectedUser?.fullName || 'User'} avatar`} 
     className='w-30 aspect-[1/1] rounded-full transition-all duration-500 
       hover:scale-110 hover:shadow-lg hover:shadow-purple-500/50
       animate-fadeIn' 
@@ -46,7 +46,7 @@ const RightSidebar = () => {
             {msgImages.map( (url,index)=>(
                 <div key={index} onClick={()=>window.open(url)}
                 className='cursor-pointer rounded'>
-                    <img src={url} alt="" className='h-full rounded-md'/>
+                    <img src={url} alt="Shared image" className='h-full rounded-md'/>
 
                 </div>
             ))}

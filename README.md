@@ -104,10 +104,10 @@ npm install
 ### 3. Environment Variables
 
 #### Server Environment (.env)
-Create a `.env` file in the `server` directory:
+Create a `.env` file in the `server` directory (you can copy from `server/config/env.example`):
 
 ```env
-PORT=5000
+PORT=5001
 MONGODB_URI=your_mongodb_connection_string
 JWT_SECRET=your_jwt_secret_key
 CLOUDINARY_CLOUD_NAME=your_cloudinary_cloud_name
@@ -117,10 +117,11 @@ CLIENT_URL=http://localhost:5173
 ```
 
 #### Client Environment (.env)
-Create a `.env` file in the `client` directory:
+Create a `.env` file in the `client` directory (you can copy from `client/config/env.example`):
 
 ```env
-VITE_BACKEND_URL=http://localhost:5000
+VITE_BACKEND_URL=http://localhost:5001
+VITE_SOCKET_SERVER_URL=http://localhost:5001
 ```
 
 ### 4. Start the Application
@@ -130,7 +131,7 @@ VITE_BACKEND_URL=http://localhost:5000
 cd server
 npm run server
 ```
-The server will run on `http://localhost:5000`
+The server will run on `http://localhost:5001`
 
 #### Terminal 2 - Start the Client
 ```bash
