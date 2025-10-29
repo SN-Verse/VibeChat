@@ -11,12 +11,13 @@ import { Server } from "socket.io";
 // create Express app and HTTP server
 
 const app = express()
+app.disable('x-powered-by')
 const server = http.createServer(app)
 
 // intialize socket.io server
 export const socketServer = new Server(server, {
     cors: {
-        origin: process.env.CLIENT_URL || '*', 
+        origin: process.env.CLIENT_URL || 'http://localhost:5173',
         credentials: true
     }
 }) 
@@ -60,13 +61,19 @@ app.locals.userSocketMap = userSocketMap;
 // Middleweare Setup
 app.use(express.json({limit:"4mb"}))
 app.use(cors({
-    origin: process.env.CLIENT_URL || '*', 
+    origin: process.env.CLIENT_URL || 'http://localhost:5173',
     credentials: true
 }));
 
 app.use("/api/status",(req,res)=> res.send("Server is live"))
 app.use("/api/auth",userRouter)
 app.use("/api/messages",messageRouter)
+
+// Generic error handler to avoid leaking internals
+app.use((err, req, res, next) => {
+    console.error('Unhandled error:', err?.message)
+    res.status(500).json({ success: false, message: 'Internal server error' })
+})
 
 // Connecct to MongoDB
 await connectDB();
