@@ -76,18 +76,26 @@ export const ChatProvider = ({ children }) => {
             });
         };
 
+        const handleMessageEdited = ({ messageId, text, edited, editedAt }) => {
+            setMessages(prev => prev.map(msg =>
+                msg._id === messageId ? { ...msg, text, edited: !!edited, editedAt } : msg
+            ));
+        };
+
         const handleUserTyping = ({ from, isTyping }) => {
             setTypingUsers(prev => ({ ...prev, [from]: !!isTyping }));
         };
 
         socket.on("newMessage", handleNewMessage);
         socket.on("messageDeleted", handleMessageDeleted);
+        socket.on("messageEdited", handleMessageEdited);
         socket.on("userTyping", handleUserTyping);
 
         // Return cleanup function
         return () => {
             socket.off("newMessage", handleNewMessage);
             socket.off("messageDeleted", handleMessageDeleted);
+            socket.off("messageEdited", handleMessageEdited);
             socket.off("userTyping", handleUserTyping);
         };
     };
@@ -123,6 +131,20 @@ export const ChatProvider = ({ children }) => {
             }
         } catch (error) {
             toast.error(error.message || 'Failed to delete message');
+        }
+    };
+
+    // Edit message
+    const editMessage = async (messageId, text) => {
+        try {
+            const { data } = await axios.put(`/api/messages/${messageId}`, { text });
+            if (data.success) {
+                setMessages(prev => prev.map(msg =>
+                    msg._id === messageId ? { ...msg, text: data.message.text, edited: true, editedAt: data.message.editedAt } : msg
+                ));
+            }
+        } catch (error) {
+            toast.error(error.message || 'Failed to edit message');
         }
     };
 
@@ -170,7 +192,7 @@ export const ChatProvider = ({ children }) => {
 
     const value = {
         messages, friends, allUsers, sentRequests, receivedRequests,
-        selectedUser, getSocialData, getMessages, sendMessage, setSelectedUser, unseenMessages, setUnseenMessages, deleteMessage,
+        selectedUser, getSocialData, getMessages, sendMessage, setSelectedUser, unseenMessages, setUnseenMessages, deleteMessage, editMessage,
         typingUsers, sendTypingStatus
     };
 

@@ -4,7 +4,7 @@ import { formatMessageTime } from '../lib/utils'
 import { ChatContext } from '../../context/ChatContext'
 import { AuthContext } from '../../context/AuthContext'
 import toast from 'react-hot-toast'
-import { Trash2, Search, Image as ImageIcon } from 'lucide-react'
+import { Trash2, Search, Image as ImageIcon, Pencil } from 'lucide-react'
 import { formatDateForGrouping } from "../utils/formatDate"
 
 
@@ -19,6 +19,7 @@ const ChatContainer = () => {
   const [confirmDelete, setConfirmDelete] = useState({ show: false, messageId: null, deleteFor: null })
   const typingTimeoutRef = useRef(null)
   const [autoScroll, setAutoScroll] = useState(true)
+  const [editState, setEditState] = useState({ messageId: null, text: '' })
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target
@@ -56,6 +57,13 @@ const ChatContainer = () => {
       groups[date].push(msg)
     })
     return groups
+  }
+
+  const canEditMessage = (msg) => {
+    if (!msg || msg.senderId !== authUser._id) return false
+    if (!msg.text || msg.image) return false
+    const created = new Date(msg.createdAt).getTime()
+    return Date.now() - created <= 2 * 60 * 1000
   }
 
   // Derive displayed messages directly so new messages instantly reflect in results
@@ -185,23 +193,52 @@ const ChatContainer = () => {
                     </div>
                   ) : (
                     <div className="relative">
-                      <p className={`p-2 max-w-[250px] md:text-sm font-light rounded-lg break-all text-white ${
-                          msg.senderId === authUser._id
-                            ? 'bg-violet-500/30 rounded-br-none self-end'
-                            : 'bg-gray-700/40 rounded-bl-none self-start'}`}>
-                        {msg.text}
-                      </p>
-                      <Trash2
-                        className="hidden group-hover:block absolute top-0 right-0 w-4 h-4 cursor-pointer text-red-500 hover:text-red-600"
-                        onClick={() => setShowDeleteOptions(msg._id)}
-                      />
-                      {/* Message delivery status indicator */}
-                      {msg.senderId === authUser._id && (
-                        <div className="absolute -right-10 bottom-1 flex items-center gap-0.5 text-[10px] text-gray-400 animate-fade-in">
-                          <span className={msg.seen ? 'text-blue-400' : 'text-gray-500'}>
-                            {msg.seen ? '✓✓' : '✓'}
-                          </span>
+                      {editState.messageId === msg._id ? (
+                        <div className={`p-2 max-w-[280px] rounded-lg ${msg.senderId === authUser._id ? 'bg-violet-500/20' : 'bg-gray-700/40'}`}>
+                          <textarea
+                            className="w-full bg-transparent outline-none text-white text-sm resize-none"
+                            rows={2}
+                            value={editState.text}
+                            onChange={(e) => setEditState(s => ({ ...s, text: e.target.value }))}
+                          />
+                          <div className="flex gap-2 mt-2 text-xs">
+                            <button
+                              className="px-3 py-1 rounded bg-violet-600 hover:bg-violet-700"
+                              onClick={async () => {
+                                const trimmed = (editState.text || '').trim()
+                                if (!trimmed) return toast.error('Message cannot be empty')
+                                await editMessage(editState.messageId, trimmed)
+                                setEditState({ messageId: null, text: '' })
+                              }}
+                            >Save</button>
+                            <button
+                              className="px-3 py-1 rounded bg-gray-700 hover:bg-gray-600"
+                              onClick={() => setEditState({ messageId: null, text: '' })}
+                            >Cancel</button>
+                          </div>
                         </div>
+                      ) : (
+                        <>
+                          <p className={`p-2 max-w-[250px] md:text-sm font-light rounded-lg break-all text-white ${
+                              msg.senderId === authUser._id
+                                ? 'bg-violet-500/30 rounded-br-none self-end'
+                                : 'bg-gray-700/40 rounded-bl-none self-start'}`}>
+                            {msg.text}
+                            {msg.edited && <span className="ml-2 text-[10px] text-gray-400">(edited)</span>}
+                          </p>
+                          <Trash2
+                            className="hidden group-hover:block absolute top-0 right-0 w-4 h-4 cursor-pointer text-red-500 hover:text-red-600"
+                            onClick={() => setShowDeleteOptions(msg._id)}
+                          />
+                          {/* Message delivery status indicator */}
+                          {msg.senderId === authUser._id && (
+                            <div className="absolute -right-10 bottom-1 flex items-center gap-0.5 text-[10px] text-gray-400 animate-fade-in">
+                              <span className={msg.seen ? 'text-blue-400' : 'text-gray-500'}>
+                                {msg.seen ? '✓✓' : '✓'}
+                              </span>
+                            </div>
+                          )}
+                        </>
                       )}
                     </div>
                   )}
@@ -221,6 +258,17 @@ const ChatContainer = () => {
                           onClick={() => setConfirmDelete({ show: true, messageId: msg._id, deleteFor: 'everyone' })}
                         >
                           Delete for everyone
+                        </button>
+                      )}
+                      {canEditMessage(msg) && (
+                        <button
+                          className="flex items-center gap-2 w-full text-left px-4 py-2 text-sm text-white hover:bg-gray-700 rounded mt-1"
+                          onClick={() => {
+                            setShowDeleteOptions(null)
+                            setEditState({ messageId: msg._id, text: msg.text || '' })
+                          }}
+                        >
+                          <Pencil className="w-4 h-4" /> Edit message
                         </button>
                       )}
                     </div>
