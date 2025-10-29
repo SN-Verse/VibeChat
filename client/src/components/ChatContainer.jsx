@@ -22,7 +22,9 @@ const ChatContainer = () => {
 
   const handleScroll = (e) => {
     const { scrollTop, scrollHeight, clientHeight } = e.target
-    const isAtBottom = scrollHeight - scrollTop === clientHeight
+    // Consider within a small threshold as bottom to avoid off-by-1 with images/fonts
+    const delta = scrollHeight - scrollTop - clientHeight
+    const isAtBottom = delta <= 16
     setAutoScroll(isAtBottom)
   }
 
@@ -30,11 +32,17 @@ const ChatContainer = () => {
     if (selectedUser) getMessages(selectedUser._id)
   }, [selectedUser, getMessages])
 
-  useEffect(() => {
-  if (autoScroll && scrollEnd.current) {
-    scrollEnd.current.scrollIntoView({ behavior: "smooth" })
+  const scrollToEnd = () => {
+    if (scrollEnd.current) {
+      scrollEnd.current.scrollIntoView({ behavior: "smooth" })
+    }
   }
-}, [messages, autoScroll])
+
+  useEffect(() => {
+    if (autoScroll) {
+      scrollToEnd()
+    }
+  }, [messages, autoScroll])
 
   // No stateful cache for search results; derive from messages for real-time updates
 
@@ -176,7 +184,7 @@ const ChatContainer = () => {
                         <b>{vibeInvite.fromName}</b> invited you to a VibeRoom!
                       </p>
                       <a
-                        href={`/viberoom/${vibeInvite.roomId}?video=${encodeURIComponent(vibeInvite.videoUrl)}`}
+                        href={`/viberoom/${vibeInvite.roomId}?v=${btoa(encodeURIComponent(vibeInvite.videoUrl))}`}
                         className="text-purple-400 underline"
                       >
                         Join & Watch Together
@@ -188,6 +196,7 @@ const ChatContainer = () => {
                         src={msg.image}
                         alt="Sent/Received"
                         className="w-40 h-40 object-cover rounded-lg cursor-pointer"
+                        onLoad={() => { if (autoScroll) scrollToEnd() }}
                       />
                       <Trash2
                         className="hidden group-hover:block absolute top-0 right-0 w-4 h-4 cursor-pointer text-red-500 hover:text-red-600"

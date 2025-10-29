@@ -30,7 +30,21 @@ const VibeRoom = () => {
   const playerRef = useRef();
   const isRemoteActionRef = useRef(false); // suppress echo when applying remote actions
   const lastEmitAtRef = useRef(0);
-  const videoParam = new URLSearchParams(location.search).get("video");
+  // Support both legacy `video` (URL-encoded) and new `v` (base64-encoded) params
+  const params = new URLSearchParams(location.search);
+  const base64Param = params.get("v");
+  const legacyParam = params.get("video");
+  let videoParam = "";
+  try {
+    if (base64Param) {
+      videoParam = decodeURIComponent(atob(base64Param));
+    } else if (legacyParam) {
+      // `URLSearchParams` already decodes percent-encoding
+      videoParam = legacyParam;
+    }
+  } catch {
+    videoParam = legacyParam || "";
+  }
 
   useEffect(() => {
     if (videoParam) {
@@ -134,7 +148,9 @@ const VibeRoom = () => {
     }
 
     // Navigate the creator to the room
-    navigate(`/viberoom/${newRoomId}?video=${encodeURIComponent(videoUrl)}`);
+    // Use base64 in query to avoid breaking on special characters
+    const encoded = btoa(encodeURIComponent(videoUrl));
+    navigate(`/viberoom/${newRoomId}?v=${encoded}`, { state: { isHost: true } });
   };
 
   const handleSendLiveChat = () => {
