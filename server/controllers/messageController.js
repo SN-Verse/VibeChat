@@ -3,7 +3,7 @@
 import Message from "../models/message.js";
 import cloudinary from "../lib/cloudinary.js";
 import User from "../models/User.js";
-import { socketServer, userSocketMap } from "../server.js";
+// Note: use req.app.locals.socketServer and req.app.locals.userSocketMap instead of importing here
 
 export const getUsersForSidebar = async(req,res)=>{
     try{
@@ -87,10 +87,11 @@ export const sendMessage = async (req,res)=>{
             image:imageUrl
         })
 
-        // Emit the new message to the receiver's socket
-        const receiverSocketId = userSocketMap[receiverId];
-        if(receiverSocketId){
-            io.to(receiverSocketId).emit("newMessage",newMessage)
+        // Emit the new message to the receiver's socket using the singleton io
+        const { socketServer, userSocketMap } = req.app.locals;
+        const receiverSocketId = userSocketMap && userSocketMap[receiverId];
+        if (receiverSocketId && socketServer) {
+            socketServer.to(receiverSocketId).emit("newMessage", newMessage);
         }
 
         res.json({success:true,newMessage});
@@ -123,8 +124,7 @@ export const deleteMessage = async (req, res) => {
             // Delete the message
             await Message.findByIdAndDelete(messageId);
             
-            // Emit socket event to notify other users
-            // Import at the top of file to avoid circular dependency
+            // Emit socket event to notify both parties using the singleton io
             const { socketServer, userSocketMap } = req.app.locals;
             const receiverSocketId = userSocketMap[message.receiverId.toString()];
             const senderSocketId = userSocketMap[message.senderId.toString()];
