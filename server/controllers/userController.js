@@ -13,12 +13,19 @@ export const signup = async (req,res)=>{
 
     try{
         if(!fullName || !email || !password || !bio ){
-            return res.json({success:false,message:"Missing Details"})
+            return res.status(400).json({success:false,message:"Missing required fields"})
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        if(!emailRegex.test(email)){
+            return res.status(400).json({success:false,message:"Invalid email format"})
+        }
+        if(password.length < 6){
+            return res.status(400).json({success:false,message:"Password must be at least 6 characters"})
         }
         const user = await User.findOne({email});
 
         if(user){
-             return res.json({success:false,message:"Account already exist"});
+             return res.status(409).json({success:false,message:"Account already exists"});
         }
     
         const salt = await bcrypt.genSalt(10);
@@ -29,11 +36,11 @@ export const signup = async (req,res)=>{
         })
 
         const token = generateToken(newUser._id)
-        res.json({success:true,userData:newUser,token,token,message:"Account created succesfully"})
+        res.status(201).json({success:true,userData:newUser,token,message:"Account created successfully"})
 
     } catch (error){
         console.log(error.message)
-        res.json({success:false,message:error.message}) 
+        res.status(500).json({success:false,message:"Failed to create account"}) 
     }
 }
 
@@ -44,22 +51,28 @@ export const login = async (req,res)=> {
 
     try{
          const {email,password} = req.body;
+         if(!email || !password){
+            return res.status(400).json({ success:false,message: "Email and password are required"});
+         }
          const userData = await User.findOne({email})
+         if(!userData){
+            return res.status(401).json({ success:false,message: "Invalid credentials"});
+         }
 
          const isPasswordCorrect = await bcrypt.compare(password,userData.password);
 
          if(!isPasswordCorrect){
-            return res.json({ success:false,message: "Invalid credentials"});
+            return res.status(401).json({ success:false,message: "Invalid credentials"});
          } 
 
          const token = generateToken(userData._id)
 
-        res.json({success:true,userData,token,message:"Login  succesfully"})
+        res.json({success:true,userData,token,message:"Login successfully"})
 
 
     }catch(error){
         console.log(error.message)
-         res.json({success:false,message:error.message}) 
+         res.status(500).json({success:false,message:"Login failed"}) 
     }
 }
 
@@ -97,7 +110,7 @@ export const updateprofile = async (req, res) => {
     res.json({ success: true, user: updatedUser });
   } catch (error) {
     console.log(error.message);
-    res.json({ success: false, message: error.message });
+    res.status(500).json({ success: false, message: "Failed to update profile" });
   }
 };
 

@@ -71,12 +71,28 @@ app.locals.userSocketMap = userSocketMap;
 app.use(express.json({limit:"4mb"}))
 app.use(cors({
     origin: process.env.CLIENT_URL || 'http://localhost:5173',
-    credentials: true
+    credentials: true,
+    methods: ["GET","POST","PUT","PATCH","DELETE","OPTIONS"],
+    allowedHeaders: ["Content-Type","Authorization","token"]
 }));
+
+// Minimal security headers (no extra deps)
+app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'SAMEORIGIN');
+    res.setHeader('Referrer-Policy', 'no-referrer');
+    res.setHeader('X-XSS-Protection', '0');
+    next();
+});
 
 app.use("/api/status",(req,res)=> res.send("Server is live"))
 app.use("/api/auth",userRouter)
 app.use("/api/messages",messageRouter)
+
+// 404 handler for unknown routes
+app.use((req, res) => {
+    res.status(404).json({ success: false, message: 'Route not found' })
+})
 
 // Generic error handler to avoid leaking internals
 app.use((err, req, res, next) => {
