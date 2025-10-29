@@ -19,14 +19,23 @@ const ChatContainer = () => {
   const [searchResults, setSearchResults] = useState([])
   const [confirmDelete, setConfirmDelete] = useState({ show: false, messageId: null, deleteFor: null })
   const typingTimeoutRef = useRef(null)
+  const [autoScroll, setAutoScroll] = useState(true)
+
+  const handleScroll = (e) => {
+    const { scrollTop, scrollHeight, clientHeight } = e.target
+    const isAtBottom = scrollHeight - scrollTop === clientHeight
+    setAutoScroll(isAtBottom)
+  }
 
   useEffect(() => {
     if (selectedUser) getMessages(selectedUser._id)
   }, [selectedUser, getMessages])
 
   useEffect(() => {
-    if (scrollEnd.current && messages) scrollEnd.current.scrollIntoView({ behavior: "smooth" })
-  }, [messages])
+  if (autoScroll && scrollEnd.current) {
+    scrollEnd.current.scrollIntoView({ behavior: "smooth" })
+  }
+}, [messages, autoScroll])
 
   // Search logic
   useEffect(() => {
@@ -128,8 +137,11 @@ const ChatContainer = () => {
       )}
 
       {/* Chat area */}
-      <div className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'>
-        {Object.entries(groupMessagesByDate(displayedMessages)).map(([date, dateMessages]) => (
+      <div
+        className='flex flex-col h-[calc(100%-120px)] overflow-y-scroll p-3 pb-6'
+        onScroll={handleScroll}
+      >
+        {authUser && selectedUser && Object.entries(groupMessagesByDate(displayedMessages)).map(([date, dateMessages]) => (
           <div key={date} className="mb-6">
             <div className="flex justify-center mb-4">
               <span className="bg-gray-800 text-gray-300 text-xs px-4 py-1 rounded-full">
@@ -145,7 +157,7 @@ const ChatContainer = () => {
                 // ignore JSON parse errors
               }
               return (
-                <div key={index} className="group relative flex items-end gap-2 justify-end">
+                <div key={index} className={`group relative flex items-end gap-2 mb-2 ${msg.senderId === authUser._id ? 'justify-end' : 'justify-start'}`}> 
                   {/* Message Content */}
                   {vibeInvite ? (
                     <div className="bg-violet-600/30 p-2 rounded-lg mb-8">
@@ -173,9 +185,10 @@ const ChatContainer = () => {
                     </div>
                   ) : (
                     <div className="relative">
-                      <p className={`p-2 max-w-[200px] md:text-sm font-light rounded-lg mb-8 break-all bg-violet-500/30 text-white ${
-                        msg.senderId === authUser._id ? 'rounded-br-none' : 'rounded-bl-none'
-                      }`}>
+                      <p className={`p-2 max-w-[250px] md:text-sm font-light rounded-lg break-all text-white ${
+                          msg.senderId === authUser._id
+                            ? 'bg-violet-500/30 rounded-br-none self-end'
+                            : 'bg-gray-700/40 rounded-bl-none self-start'}`}>
                         {msg.text}
                       </p>
                       <Trash2
