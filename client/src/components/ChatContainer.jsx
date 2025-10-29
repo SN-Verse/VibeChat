@@ -32,7 +32,7 @@ const ChatContainer = () => {
     if (selectedUser) getMessages(selectedUser._id)
   }, [selectedUser, getMessages])
 
-  const scrollToEnd = () => {
+  const scrollToBottom = () => {
     if (scrollEnd.current) {
       scrollEnd.current.scrollIntoView({ behavior: "smooth" })
     }
@@ -40,7 +40,7 @@ const ChatContainer = () => {
 
   useEffect(() => {
     if (autoScroll) {
-      scrollToEnd()
+      scrollToBottom()
     }
   }, [messages, autoScroll])
 
@@ -176,7 +176,7 @@ const ChatContainer = () => {
                         src={msg.image}
                         alt="Sent/Received"
                         className="w-40 h-40 object-cover rounded-lg cursor-pointer"
-                        onLoad={() => { if (autoScroll) scrollToEnd() }}
+                        onLoad={() => { if (autoScroll) scrollToBottom() }}
                       />
                       <Trash2
                         className="hidden group-hover:block absolute top-0 right-0 w-4 h-4 cursor-pointer text-red-500 hover:text-red-600"
