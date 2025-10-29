@@ -153,3 +153,52 @@ export const deleteMessage = async (req, res) => {
     }
 };
 
+// Edit message within 2-minute grace window
+export const editMessage = async (req, res) => {
+    try {
+        const { messageId } = req.params;
+        const { text } = req.body;
+        const userId = req.user._id;
+
+        if (!text || typeof text !== 'string' || text.trim().length === 0) {
+            return res.status(400).json({ success: false, message: 'Text is required' });
+        }
+
+        const message = await Message.findById(messageId);
+        if (!message) return res.status(404).json({ success: false, message: 'Message not found' });
+
+        if (message.senderId.toString() !== userId.toString()) {
+            return res.status(403).json({ success: false, message: 'Unauthorized' });
+        }
+
+        // Only text messages can be edited
+        if (message.image) {
+            return res.status(400).json({ success: false, message: 'Cannot edit image messages' });
+        }
+
+        const now = Date.now();
+        const created = new Date(message.createdAt).getTime();
+        if (now - created > 2 * 60 * 1000) { // 2 minutes
+            return res.status(400).json({ success: false, message: 'Edit window expired' });
+        }
+
+        message.text = text;
+        message.edited = true;
+        message.editedAt = new Date();
+        await message.save();
+
+        const { socketServer, userSocketMap } = req.app.locals;
+        const receiverSocketId = userSocketMap[message.receiverId.toString()];
+        const senderSocketId = userSocketMap[message.senderId.toString()];
+        const payload = { messageId, text: message.text, edited: true, editedAt: message.editedAt };
+
+        if (receiverSocketId) socketServer.to(receiverSocketId).emit('messageEdited', payload);
+        if (senderSocketId) socketServer.to(senderSocketId).emit('messageEdited', payload);
+
+        res.json({ success: true, message: { _id: messageId, text: message.text, edited: true, editedAt: message.editedAt } });
+    } catch (error) {
+        console.error('Edit error:', error);
+        res.status(500).json({ success: false, message: error.message });
+    }
+};
+

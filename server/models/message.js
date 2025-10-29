@@ -6,7 +6,9 @@ const messageSchema = new mongoose.Schema({
     text: {type: String},
     image: {type: String},
     seen: {type: Boolean, default: false},
-    deletedFor: [{type: mongoose.Schema.Types.ObjectId, ref: "User"}] // Make sure this field exists
+    deletedFor: [{type: mongoose.Schema.Types.ObjectId, ref: "User"}],
+    edited: { type: Boolean, default: false },
+    editedAt: { type: Date }
 }, {timestamps: true});
 
 const Message = mongoose.model("Message", messageSchema);
