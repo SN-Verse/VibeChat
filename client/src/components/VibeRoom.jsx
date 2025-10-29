@@ -28,6 +28,8 @@ const VibeRoom = () => {
   const navigate = useNavigate();
   const { roomId } = useParams();
   const playerRef = useRef();
+  const isRemoteActionRef = useRef(false); // suppress echo when applying remote actions
+  const lastEmitAtRef = useRef(0);
   const videoParam = new URLSearchParams(location.search).get("video");
 
   useEffect(() => {
@@ -45,12 +47,39 @@ const VibeRoom = () => {
     }
     
     // Listen for video actions
-    const handleVideoAction = ({ action, time }) => {
+    const handleVideoAction = ({ action, time, state }) => {
       if (!playerRef.current) return;
       const ytPlayer = playerRef.current.internalPlayer;
-      if (action === "play") ytPlayer.playVideo();
-      if (action === "pause") ytPlayer.pauseVideo();
-      if (action === "seek") ytPlayer.seekTo(time, true);
+      isRemoteActionRef.current = true;
+      const applySeekIfNeeded = async () => {
+        try {
+          const current = await ytPlayer.getCurrentTime();
+          if (typeof time === 'number' && Math.abs(current - time) > 0.25) {
+            await ytPlayer.seekTo(time, true);
+          }
+        } catch {}
+      };
+      if (action === "seek") {
+        applySeekIfNeeded();
+      }
+      if (action === "pause") {
+        applySeekIfNeeded().then(() => ytPlayer.pauseVideo());
+      }
+      if (action === "play") {
+        applySeekIfNeeded().then(() => ytPlayer.playVideo());
+      }
+      if (action === "sync") {
+        applySeekIfNeeded().then(async () => {
+          try {
+            const currentState = await ytPlayer.getPlayerState();
+            // Host paused => ensure paused; host playing => ensure playing
+            if (state === 2 && currentState !== 2) ytPlayer.pauseVideo();
+            if (state === 1 && currentState !== 1) ytPlayer.playVideo();
+          } catch {}
+        });
+      }
+      // Reset the remote flag shortly after to allow local events again
+      setTimeout(() => { isRemoteActionRef.current = false; }, 50);
     };
     
     socket.on("video-action", handleVideoAction);
@@ -118,22 +147,45 @@ const VibeRoom = () => {
     setChatInput("");
   };
 
-  // Emit video actions
+  // Emit video actions (guard echoes and throttle)
   const handlePlayerStateChange = (event) => {
     if (!roomId || !socket) return;
+    if (isRemoteActionRef.current) return;
     const ytPlayer = event.target;
     const state = ytPlayer.getPlayerState();
     const time = ytPlayer.getCurrentTime();
+    const now = Date.now();
+    if (now - lastEmitAtRef.current < 80) return; // basic debounce against rapid state flips
+    lastEmitAtRef.current = now;
     if (state === 1) socket.emit("video-action", { roomId, action: "play", time });
     if (state === 2) socket.emit("video-action", { roomId, action: "pause", time });
   };
 
   const handlePlayerSeek = (event) => {
     if (!roomId || !socket) return;
+    if (isRemoteActionRef.current) return;
     const ytPlayer = event.target;
     const time = ytPlayer.getCurrentTime();
     socket.emit("video-action", { roomId, action: "seek", time });
   };
+
+  // Identify host (creator navigates with state flag)
+  const isHost = !!(location.state && location.state.isHost === true);
+
+  // Host heartbeat sync to correct drift
+  useEffect(() => {
+    if (!socket || !roomId || !isHost) return;
+    const interval = setInterval(async () => {
+      if (!playerRef.current) return;
+      try {
+        const ytPlayer = playerRef.current.internalPlayer;
+        const time = await ytPlayer.getCurrentTime();
+        const state = await ytPlayer.getPlayerState();
+        socket.emit("video-action", { roomId, action: "sync", time, state });
+      } catch {}
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [socket, roomId, isHost]);
 
   // Only show invite UI if NOT joining via invite link
   const showInviteUI = !videoParam;
