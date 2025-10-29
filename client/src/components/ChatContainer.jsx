@@ -16,7 +16,6 @@ const ChatContainer = () => {
   const [showDeleteOptions, setShowDeleteOptions] = useState(null)
   const [showSearch, setShowSearch] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState([])
   const [confirmDelete, setConfirmDelete] = useState({ show: false, messageId: null, deleteFor: null })
   const typingTimeoutRef = useRef(null)
   const [autoScroll, setAutoScroll] = useState(true)
@@ -37,17 +36,7 @@ const ChatContainer = () => {
   }
 }, [messages, autoScroll])
 
-  // Search logic
-  useEffect(() => {
-    if (!searchTerm.trim()) {
-      setSearchResults([])
-      return
-    }
-    const results = messages
-      .map((msg, idx) => ({ ...msg, idx }))
-      .filter(msg => msg.text && msg.text.toLowerCase().includes(searchTerm.toLowerCase()))
-    setSearchResults(results)
-  }, [searchTerm, messages])
+  // No stateful cache for search results; derive from messages for real-time updates
 
   // Group messages by date
   const groupMessagesByDate = (msgs) => {
@@ -61,8 +50,10 @@ const ChatContainer = () => {
     return groups
   }
 
-  // Use search results if searching
-  const displayedMessages = searchTerm ? searchResults.map(r => messages[r.idx]) : messages
+  // Derive displayed messages directly so new messages instantly reflect in results
+  const displayedMessages = searchTerm
+    ? messages.filter(m => m.text && m.text.toLowerCase().includes(searchTerm.toLowerCase()))
+    : messages
 
   // Send message
   const handleSendMessage = async (e) => {
