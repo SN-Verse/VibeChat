@@ -22,6 +22,11 @@ export const ChatProvider = ({ children }) => {
             const { data } = await axios.get(`api/messages/${userId}`);
             if (data.success) {
                 setMessages(data.messages);
+                // Ensure unread badge for this user is cleared locally after server marks seen
+                setUnseenMessages(prev => ({
+                    ...prev,
+                    [userId]: 0
+                }));
             }
         } catch (error) {
             toast.error(error.message);
@@ -130,7 +135,14 @@ export const ChatProvider = ({ children }) => {
                 setAllUsers(data.allUsers);
                 setSentRequests(data.sentRequests);
                 setReceivedRequests(data.receivedRequests);
-                setUnseenMessages(data.unseenMessages || {});
+                // Merge unseen counts, but always keep active chat at 0 to avoid flicker/race
+                setUnseenMessages(prev => {
+                    const incoming = data.unseenMessages || {};
+                    if (selectedUser?._id) {
+                        incoming[selectedUser._id] = 0;
+                    }
+                    return { ...prev, ...incoming };
+                });
             }
         } catch (error) {
             toast.error(error.message || "Failed to load social data");
@@ -140,6 +152,16 @@ export const ChatProvider = ({ children }) => {
     useEffect(() => {
         getSocialData();
     }, [onlineUsers]);
+
+    // When selecting a conversation, immediately clear its unread badge locally
+    useEffect(() => {
+        if (selectedUser?._id) {
+            setUnseenMessages(prev => ({
+                ...prev,
+                [selectedUser._id]: 0
+            }));
+        }
+    }, [selectedUser]);
 
     const sendTypingStatus = (toUserId, isTyping) => {
         if (!socket || !toUserId) return;
