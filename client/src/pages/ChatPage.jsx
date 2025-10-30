@@ -14,7 +14,7 @@ const ChatPage = () => {
       <div className="relative z-10 flex flex-col items-center justify-center h-full"> 
         <div className="border w-full h-screen sm:px-[-15%] sm:py-[1%]">
           <div
-            className={`backdrop-blur-s border-2 border-gray-600 rounded-2xl overflow-hidden h-[100%] grid grid-cols-1 relative ${
+            className={`backdrop-blur-s border-2 border-gray-600 rounded-2xl overflow-hidden h-full grid grid-cols-1 relative ${
               selectedUser
                 ? 'md:grid-cols-[1fr_1.5fr_1fr] xl:grid-cols-[1fr_2fr_1fr]'
                 : 'md:grid-cols-2'

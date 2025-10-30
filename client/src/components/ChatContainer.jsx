@@ -139,9 +139,7 @@ const ChatContainer = () => {
           {selectedUser.fullName}
           {onlineUsers.includes(selectedUser._id) && <span className='w-2 h-2 rounded-full bg-green-500'></span>}
         </p>
-        {typingUsers[selectedUser._id] && (
-          <span className='text-xs text-gray-400'>typing…</span>
-        )}
+        
         <Search
           className="w-5 h-5 cursor-pointer text-gray-400 hover:text-white"
           onClick={() => setShowSearch((prev) => !prev)}
@@ -243,7 +241,7 @@ const ChatContainer = () => {
                               msg.senderId === authUser._id
                                 ? 'bg-violet-500/30 rounded-br-none self-end'
                                 : 'bg-gray-700/40 rounded-bl-none self-start'}`}>
-                            {msg.text}
+                            {msg.text}            
                             {msg.edited && <span className="ml-2 text-[10px] text-gray-400">(edited)</span>}
                           </p>
                           <Trash2
@@ -309,6 +307,13 @@ const ChatContainer = () => {
             })}
           </div>
         ))}
+        {typingUsers[selectedUser._id] && (
+            <div className="flex justify-start mb-3">
+              <div className="bg-gray-700/40 text-gray-300 text-sm rounded-lg px-3 py-2">
+                typing...
+              </div>
+            </div>
+        )}
         <div ref={scrollEnd}></div>
       </div>
 
@@ -338,6 +343,7 @@ const ChatContainer = () => {
           </div>
         </div>
       )}
+      
 
       {/* Bottom Area */}
       <div className="w-full fixed bottom-0 left-0 bg-gray-900 p-3 flex items-center gap-2">
@@ -352,7 +358,6 @@ const ChatContainer = () => {
         </label>
         <input
           type="text"
-          placeholder="Type a message..."
           value={input}
           onChange={(e) => {
             const val = e.target.value
