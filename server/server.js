@@ -49,7 +49,9 @@ socketServer.on("connection",(socket)=>{
         if (!to || !userId) return;
         const targetSocket = userSocketMap[to];
         if (targetSocket) {
-            socketServer.to(targetSocket).emit("userTyping", { from: userId, isTyping: !!isTyping });
+          socketServer
+            .to(targetSocket)
+            .emit("userTyping", { from: userId, isTyping: !!isTyping });
         }
     });
 
