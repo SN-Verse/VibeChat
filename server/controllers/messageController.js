@@ -36,6 +36,7 @@ export const getMessages = async(req,res)=>{
         const myId = req.user._id;
 
         const messages = await Message.find({
+            deletedFor: { $ne: myId },
             $or:[
                 {senderId: myId, receiverId: selectedUserId},
                 {senderId: selectedUserId, receiverId: myId},
